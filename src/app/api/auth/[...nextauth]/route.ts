@@ -14,6 +14,20 @@ const handler = NextAuth({
 			clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
 			tenantId: process.env.AZURE_AD_TENANT_ID,
 		}),
-	]
+	],
+	callbacks: {
+    async jwt({ token, account }) {
+      // 初回サインイン時にアクセストークンをトークンに保存
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // セッションにアクセストークンを含める
+      session.accessToken = token.accessToken;
+      return session;
+    },
+  },
 });
 export { handler as GET, handler as POST };

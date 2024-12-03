@@ -213,6 +213,15 @@ a.secondary {
   margin: 0;
 }
 
+.tokenInfo {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  
+}
+
 .logoutButton {
   width: 100%;
   padding: 0.75rem;
@@ -288,5 +297,72 @@ a.secondary {
 
   .card {
     padding: 1.5rem;
+  }
+}
+
+/* 既存のスタイルはそのままで、以下を追加 */
+
+.tokenContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tokenInfo {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+.copyButton {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.copyButton:hover {
+  background: #f3f4f6;
+}
+
+.copySuccess {
+  color: #16a34a;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .copyButton {
+    border-color: #374151;
+  }
+
+  .copyButton:hover {
+    background: #1f2937;
+  }
+
+  .copySuccess {
+    color: #4ade80;
+  }
+}
+
+/* Responsive design for token container */
+@media (max-width: 640px) {
+  .tokenContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .copyButton {
+    width: 100%;
+    padding: 0.5rem;
   }
 }
