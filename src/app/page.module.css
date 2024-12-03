@@ -177,7 +177,7 @@ a.secondary {
   border-radius: 12px;
   padding: 2rem;
   width: 100%;
-  max-width: 500px;
+  max-width: 800px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
               0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -317,19 +317,18 @@ a.secondary {
 }
 
 .copyButton {
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  background: var(--background);
-  color: var(--foreground);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
+  padding: 0.25rem 0.75rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .copyButton:hover {
-  background: #f3f4f6;
+  background-color: #5a6268;
 }
 
 .copySuccess {
@@ -437,19 +436,17 @@ a.secondary {
 
 .filePathContainer {
   margin-top: 1rem;
-  padding: 0.75rem;
-  background: #f9fafb;
-  border-radius: 6px;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .filePath {
-  font-size: 0.875rem;
   margin: 0;
   word-break: break-all;
-  flex: 1;
 }
 
 .error {
@@ -486,5 +483,227 @@ a.secondary {
   .buttonLoader {
     border-color: #374151;
     border-top-color: #9ca3af;
+  }
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.downloadButton {
+  background-color: #007bff;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+}
+
+.downloadButton:hover {
+  background-color: #0056b3;
+}
+
+.downloadButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.loading {
+  position: relative;
+  color: transparent;
+}
+
+.buttonLoader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.fileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pathRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.downloadSection {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rootSection {
+  margin-bottom: 1.5rem;
+}
+
+.rootButton {
+  background-color: #28a745;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.rootButton:hover {
+  background-color: #218838;
+}
+
+.rootButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.rootInfo {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.rootInfo h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.infoRow {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  font-size: 0.875rem;
+}
+
+.infoLabel {
+  font-weight: bold;
+  min-width: 80px;
+  color: #495057;
+}
+
+.infoValue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  word-break: break-all;
+}
+
+.miniCopyButton {
+  padding: 0.25rem 0.5rem;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.miniCopyButton:hover {
+  background-color: #5a6268;
+}
+
+.divider {
+  height: 1px;
+  background-color: #dee2e6;
+  margin: 1.5rem 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .rootButton {
+    background-color: #2ea043;
+  }
+
+  .rootButton:hover {
+    background-color: #3fb950;
+  }
+
+  .rootInfo {
+    background-color: #1f2937;
+  }
+
+  .rootInfo h3 {
+    color: #e5e7eb;
+  }
+
+  .infoLabel {
+    color: #e5e7eb;
+  }
+
+  .miniCopyButton {
+    background-color: #4b5563;
+  }
+
+  .miniCopyButton:hover {
+    background-color: #6b7280;
+  }
+
+  .divider {
+    background-color: #374151;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .infoRow {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .infoLabel {
+    min-width: auto;
+  }
+
+  .infoValue {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .miniCopyButton {
+    width: 100%;
+    padding: 0.5rem;
+  }
+}
+
+.itemDivider {
+  height: 1px;
+  background-color: #dee2e6;
+  margin: 1rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .itemDivider {
+    background-color: #374151;
   }
 }
