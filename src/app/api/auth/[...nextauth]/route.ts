@@ -27,6 +27,7 @@ const handler = NextAuth({
       if (account) {
         token.accessToken = account.access_token;
 				token.scope = account.scope;
+				token.provider = account.provider;
       }
       return token;
     },
@@ -34,6 +35,7 @@ const handler = NextAuth({
       // セッションにアクセストークンを含める
       session.accessToken = token.accessToken;
 			session.scope = token.scope;
+			session.provider = token.provider;
       return session;
     },
   },
