@@ -13,6 +13,12 @@ const handler = NextAuth({
 			clientId: process.env.AZURE_AD_CLIENT_ID!,
 			clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
 			tenantId: process.env.AZURE_AD_TENANT_ID,
+			authorization: {
+        params: {
+          scope:
+            "Files.Read.All Files.ReadWrite Files.ReadWrite.All Sites.Read.All Sites.ReadWrite.All User.Read openid email profile",
+        },
+      },
 		}),
 	],
 	callbacks: {
@@ -20,12 +26,14 @@ const handler = NextAuth({
       // 初回サインイン時にアクセストークンをトークンに保存
       if (account) {
         token.accessToken = account.access_token;
+				token.scope = account.scope;
       }
       return token;
     },
     async session({ session, token }) {
       // セッションにアクセストークンを含める
       session.accessToken = token.accessToken;
+			session.scope = token.scope;
       return session;
     },
   },

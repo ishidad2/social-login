@@ -300,8 +300,6 @@ a.secondary {
   }
 }
 
-/* 既存のスタイルはそのままで、以下を追加 */
-
 .tokenContainer {
   display: flex;
   align-items: center;
@@ -364,5 +362,129 @@ a.secondary {
   .copyButton {
     width: 100%;
     padding: 0.5rem;
+  }
+}
+
+.fileSection {
+  margin: 1.5rem 0;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fileInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: #6b7280;
+}
+
+.fileButton {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.fileButton:hover {
+  background: #f3f4f6;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .fileInput {
+    border-color: #374151;
+  }
+
+  .fileInput:focus {
+    border-color: #6b7280;
+  }
+
+  .fileButton {
+    border-color: #374151;
+  }
+
+  .fileButton:hover {
+    background: #1f2937;
+  }
+}
+
+/* Responsive design for file section */
+@media (max-width: 640px) {
+  .inputGroup {
+    flex-direction: column;
+  }
+
+  .fileButton {
+    width: 100%;
+  }
+}
+
+.filePathContainer {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filePath {
+  font-size: 0.875rem;
+  margin: 0;
+  word-break: break-all;
+  flex: 1;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.fileButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonLoader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 2px solid #666;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .filePathContainer {
+    background: #1f2937;
+  }
+
+  .error {
+    color: #ef4444;
+  }
+
+  .buttonLoader {
+    border-color: #374151;
+    border-top-color: #9ca3af;
   }
 }
