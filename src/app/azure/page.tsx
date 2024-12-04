@@ -19,6 +19,7 @@ export default function AzurePage() {
   const [isLoadingRoot, setIsLoadingRoot] = useState(false);
   const [rootError, setRootError] = useState('');
   const [isFile, setIsFile] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   if (session?.provider === 'google') {
     redirect('/google');
@@ -38,9 +39,9 @@ export default function AzurePage() {
   };
 
   const handleCopyToken = async () => {
-    if (session?.accessToken) {
+    if (session?.access_token) {
       try {
-        await navigator.clipboard.writeText(session.accessToken);
+        await navigator.clipboard.writeText(session.access_token);
         setCopySuccess(true);
         setTimeout(() => setCopySuccess(false), 2000);
       } catch (err) {
@@ -57,7 +58,7 @@ export default function AzurePage() {
     try {
       const res = await axios.get('https://graph.microsoft.com/v1.0/me/drive/root/children', {
         headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
 
@@ -81,7 +82,7 @@ export default function AzurePage() {
     try {
       const res = await axios.get(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`, {
         headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
 
@@ -98,7 +99,7 @@ export default function AzurePage() {
   };
 
   const handleDownloadFile = async () => {
-    if (!fileId || !session?.accessToken) return;
+    if (!fileId || !session?.access_token) return;
 
     try {
       setIsLoading(true);
@@ -106,7 +107,7 @@ export default function AzurePage() {
         `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`,
         {
           headers: {
-            Authorization: `Bearer ${session.accessToken}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           responseType: 'blob',
         }
@@ -154,7 +155,7 @@ export default function AzurePage() {
               </p>
               <div className={styles.tokenContainer}>
                 <p className={styles.tokenInfo}>
-                  トークン：{truncateToken(session.accessToken!)}
+                  トークン：{truncateToken(session.access_token!)}
                 </p>
                 <button
                   onClick={handleCopyToken}
@@ -199,14 +200,15 @@ export default function AzurePage() {
                         <span className={styles.infoLabel}>ID:</span>
                         <span>{item.id}</span>
                         <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(item.id);
-                              alert('idをコピーしました');
-                            }}
-                            className={styles.miniCopyButton}
-                          >
-                            コピー
-                          </button>
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.id);
+                            setCopiedId(item.id);
+                            setTimeout(() => setCopiedId(null), 2000); // 2秒後に非表示
+                          }}
+                          className={`${styles.miniCopyButton} ${copiedId === item.id ? styles.copied : ''}`}
+                        >
+                          {copiedId === item.id ? '✓ コピー済' : 'コピー'}
+                        </button>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>名前:</span>
@@ -307,7 +309,7 @@ export default function AzurePage() {
           </div>
 
           <button
-            onClick={() => signOut()} 
+            onClick={() => signOut()}
             className={styles.logoutButton}
           >
             ログアウト

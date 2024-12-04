@@ -8,6 +8,11 @@ const handler = NextAuth({
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID ?? '',
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/drive",
+        },
+      }
 		}),
 		AzureADProvider({
 			clientId: process.env.AZURE_AD_CLIENT_ID!,
@@ -25,7 +30,11 @@ const handler = NextAuth({
     async jwt({ token, account }) {
       // 初回サインイン時にアクセストークンをトークンに保存
       if (account) {
-        token.accessToken = account.access_token;
+        token.access_token = account.access_token;
+        token.refresh_token = account.refresh_token;
+        token.expiry_date = account.expires_at;
+        token.token_type = account.token_type;
+        token.id_token = account.id_token;
 				token.scope = account.scope;
 				token.provider = account.provider;
       }
@@ -33,7 +42,11 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       // セッションにアクセストークンを含める
-      session.accessToken = token.accessToken;
+      session.access_token = token.access_token;
+      session.refresh_token = token.refresh_token;
+      session.expiry_date = token.expiry_date;
+      session.token_type = token.token_type;
+      session.id_token = token.id_token;
 			session.scope = token.scope;
 			session.provider = token.provider;
       return session;
