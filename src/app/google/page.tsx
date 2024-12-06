@@ -17,9 +17,12 @@ export default function GooglePage() {
   const [rootError, setRootError] = useState('');
   const [copyItem, setCopyItem] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<any>(null);
 
   if (session?.provider === 'azure-ad') {
     redirect('/azure');
+  }else if (session?.provider === 'box') {
+    redirect('/box');
   }
 
   if (status === 'loading') {
@@ -69,7 +72,6 @@ export default function GooglePage() {
           throw e;
         });
 
-      // Google Drive APIのレスポンスを設定
       setRootInfo(files);
     } catch (error) {
       console.error("Error fetching root directory: ", error);
@@ -79,6 +81,37 @@ export default function GooglePage() {
     }
   };
 
+  const handleShowFile = async () => {
+    if (!fileId || !session?.access_token) return;
+
+    try {
+      setIsLoading(true);
+      setError('');
+      setFileInfo(null);
+
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,kind,name,mimeType,size,owners,md5Checksum,sha1Checksum,sha256Checksum,createdTime,modifiedTime,parents,webViewLink`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + session?.access_token,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('ファイル情報の取得に失敗しました');
+      }
+
+      const data = await response.json();
+      setFileInfo(data);
+    } catch (error) {
+      console.error("Error fetching file info: ", error);
+      setError('ファイル情報の取得に失敗しました');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDownloadFile = async () => {
     if (!fileId || !session?.access_token) return;
@@ -105,7 +138,7 @@ export default function GooglePage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', copyItem.name); // ファイル名はIDをデフォルトとして使用
+      link.setAttribute('download', copyItem.name);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
@@ -186,7 +219,7 @@ export default function GooglePage() {
                             navigator.clipboard.writeText(item.id);
                             setCopyItem(item);
                             setCopiedId(item.id);
-                            setTimeout(() => setCopiedId(null), 2000); // 2秒後に非表示
+                            setTimeout(() => setCopiedId(null), 2000);
                           }}
                           className={`${styles.miniCopyButton} ${copiedId === item.id ? styles.copied : ''}`}
                         >
@@ -227,6 +260,17 @@ export default function GooglePage() {
                 className={styles.fileInput}
               />
               <button
+                onClick={handleShowFile}
+                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className={styles.buttonLoader}></div>
+                ) : (
+                  'ファイル情報取得'
+                )}
+              </button>
+              <button
                 onClick={handleDownloadFile}
                 className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
                 disabled={isLoading}
@@ -239,6 +283,14 @@ export default function GooglePage() {
               </button>
             </div>
             {error && <p className={styles.error}>{error}</p>}
+            {fileInfo && (
+              <div className={styles.fileInfo}>
+                <h3>ファイル情報</h3>
+                <pre className={styles.jsonDisplay}>
+                  {JSON.stringify(fileInfo, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
           <button
             onClick={() => signOut()}
