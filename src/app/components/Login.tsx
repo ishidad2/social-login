@@ -21,7 +21,7 @@ export default function Login() {
           <p className={styles.subtitle}>サービスを利用するにはログインが必要です</p>
 
           <div className={styles.buttonContainer}>
-            <button 
+            <button
               onClick={() => signIn('google', {}, { prompt: 'login' })}
               className={`${styles.button} ${styles.googleButton}`}
             >
@@ -46,7 +46,7 @@ export default function Login() {
               Googleでログイン
             </button>
 
-            <button 
+            <button
               onClick={() => signIn('azure-ad', {}, { prompt: 'login' })}
               className={`${styles.button} ${styles.azureButton}`}
             >
@@ -57,6 +57,23 @@ export default function Login() {
                 <path fill="#F25022" d="M12 12h11v11H12z" />
               </svg>
               Azureでログイン
+            </button>
+
+            <button
+              onClick={() => signIn('box', {}, { prompt: 'login' })}
+              className={`${styles.button} ${styles.boxButton}`}
+            >
+              <svg className={styles.icon} viewBox="0 0 24 24">
+                <path
+                  fill="#0061D5"
+                  d="M22.5 17.8L17.8 22.5C17.6 22.7 17.3 22.8 17 22.8H7C6.7 22.8 6.4 22.7 6.2 22.5L1.5 17.8C1.3 17.6 1.2 17.3 1.2 17V7C1.2 6.7 1.3 6.4 1.5 6.2L6.2 1.5C6.4 1.3 6.7 1.2 7 1.2H17C17.3 1.2 17.6 1.3 17.8 1.5L22.5 6.2C22.7 6.4 22.8 6.7 22.8 7V17C22.8 17.3 22.7 17.6 22.5 17.8Z"
+                />
+                <path
+                  fill="#FFFFFF"
+                  d="M16.8 11.3L13.9 8.4C13.8 8.3 13.7 8.2 13.5 8.2H10.5C10.3 8.2 10.2 8.3 10.1 8.4L7.2 11.3C7.1 11.4 7 11.5 7 11.7V14.7C7 14.9 7.1 15 7.2 15.1L10.1 18C10.2 18.1 10.3 18.2 10.5 18.2H13.5C13.7 18.2 13.8 18.1 13.9 18L16.8 15.1C16.9 15 17 14.9 17 14.7V11.7C17 11.5 16.9 11.4 16.8 11.3Z"
+                />
+              </svg>
+              Boxでログイン
             </button>
           </div>
         </div>

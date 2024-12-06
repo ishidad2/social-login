@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import AzureADProvider from 'next-auth/providers/azure-ad';
+import BoxProvider from 'next-auth/providers/box';
 
 const handler = NextAuth({
 	secret: process.env.NEXTAUTH_SECRET,
@@ -25,6 +26,27 @@ const handler = NextAuth({
         },
       },
 		}),
+    // https://github.com/nextauthjs/next-auth/discussions/9777
+    BoxProvider({
+      clientId: process.env.BOX_CLIENT_ID,
+      clientSecret: process.env.BOX_CLIENT_SECRET,
+      authorization: {
+        params: { scope: undefined },
+      },
+      client: {
+        token_endpoint_auth_method: "client_secret_post",
+      },
+      userinfo: {
+        url: "https://api.box.com/2.0/users/me",
+        async request({ tokens, provider }) {
+          return await fetch("https://api.box.com/2.0/users/me", {
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+            },
+          }).then(async (res) => await res.json());
+        },
+      },
+    })
 	],
 	callbacks: {
     async jwt({ token, account }) {

@@ -21,6 +21,8 @@ export default function Home() {
       redirect('/azure');
     } else if (session.provider === 'google') {
       redirect('/google');
+    } else if (session.provider === 'box') {
+      redirect('/box');
     }
   }
 

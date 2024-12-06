@@ -1,30 +1,28 @@
 'use client';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
-import axios from 'axios';
 import { redirect } from 'next/navigation';
 import Login from '../components/Login';
 import styles from '../page.module.css';
 import { signOut } from 'next-auth/react';
+import axios from 'axios';
 
-export default function AzurePage() {
+export default function BoxPage() {
   const { data: session, status } = useSession();
   const [copySuccess, setCopySuccess] = useState(false);
   const [fileId, setFileId] = useState('');
-  const [filePath, setFilePath] = useState('');
-  const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [rootInfo, setRootInfo] = useState<any>(null);
   const [isLoadingRoot, setIsLoadingRoot] = useState(false);
   const [rootError, setRootError] = useState('');
-  const [isFile, setIsFile] = useState(false);
+  const [copyItem, setCopyItem] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  if (session?.provider === 'google') {
+  if (session?.provider === 'azure-ad') {
+    redirect('/azure');
+  }else if (session?.provider === 'google') {
     redirect('/google');
-  }else if (session?.provider === 'box') {
-    redirect('/box');
   }
 
   if (status === 'loading') {
@@ -58,7 +56,7 @@ export default function AzurePage() {
     setRootInfo(null);
 
     try {
-      const res = await axios.get('https://graph.microsoft.com/v1.0/me/drive/root/children', {
+      const res = await axios.get('https://api.box.com/2.0/folders/0/items', {
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
         },
@@ -66,7 +64,7 @@ export default function AzurePage() {
 
       console.log(res.data);
 
-      setRootInfo(res.data.value);
+      setRootInfo(res.data.entries);
     } catch (error) {
       console.error("Error fetching root directory: ", error);
       setRootError('ルートディレクトリの取得に失敗しました');
@@ -75,64 +73,42 @@ export default function AzurePage() {
     }
   };
 
-  const handleGetFilePath = async () => {
-    setIsLoading(true);
-    setError('');
-    setFilePath('');
-    setFileName('');
-
-    try {
-      const res = await axios.get(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`, {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-
-      setFilePath(res.data.webUrl);
-      setFileName(res.data.name);
-      // file かどうかの情報も保存
-      setIsFile(!!res.data.file);  // 新しいstate
-    } catch (error) {
-      console.error("Error fetching files: ", error);
-      setError('ファイルパスの取得に失敗しました');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDownloadFile = async () => {
     if (!fileId || !session?.access_token) return;
 
     try {
       setIsLoading(true);
-      const response = await axios.get(
-        `https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`,
+      setError('');
+
+      const fileInfo = await fetch(
+        `https://api.box.com/2.0/files/${fileId}/content`,
         {
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: "Bearer " + session?.access_token,
           },
-          responseType: 'blob',
         }
       );
 
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      //レスポンス：https://ja.developer.box.com/reference/get-files-id/#response
+      console.log(copyItem);
+
+      if (copyItem.type != 'file') {
+        throw new Error('ファイル以外はダウンロードできません。');
+      }
+
+      const url = fileInfo.url;
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', fileName || 'download');
-
-      // Append to html link element page
+      link.setAttribute('download', copyItem.name); // ファイル名はIDをデフォルトとして使用
       document.body.appendChild(link);
-
-      // Start download
       link.click();
-
-      // Clean up and remove the link
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading file: ", error);
-      setError('ファイルのダウンロードに失敗しました');
+      setError('ファイル以外はダウンロードできません。');
     } finally {
       setIsLoading(false);
     }
@@ -189,13 +165,13 @@ export default function AzurePage() {
                 {isLoadingRoot ? (
                   <div className={styles.buttonLoader}></div>
                 ) : (
-                  'ルートディレクトリ取得'
+                  'ファイル一覧取得'
                 )}
               </button>
               {rootError && <p className={styles.error}>{rootError}</p>}
               {rootInfo && (
                 <div className={styles.rootInfo}>
-                  <h3>ルートディレクトリ情報</h3>
+                  <h3>ファイル一覧</h3>
                   {rootInfo.map((item: any, index: number) => (
                     <div key={item.id} className={styles.infoGrid}>
                       <div className={styles.infoRow}>
@@ -204,6 +180,7 @@ export default function AzurePage() {
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(item.id);
+                            setCopyItem(item);
                             setCopiedId(item.id);
                             setTimeout(() => setCopiedId(null), 2000); // 2秒後に非表示
                           }}
@@ -218,26 +195,16 @@ export default function AzurePage() {
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>種別:</span>
-                        <span>{item.file ? 'ファイル' : item.folder ? 'フォルダー' : '-'}</span>
+                        <span>{item.type}</span>
                       </div>
-                      <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>WebURL:</span>
-                        <a href={item.webUrl} target="_blank" rel="noopener noreferrer" className={styles.infoValue}>
-                          {truncateToken(item.webUrl)}【クリックで開く】
-                        </a>
-                      </div>
-                      <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>作成日時:</span>
-                        <span>
-                          {new Date(item.createdDateTime).toLocaleString('ja-JP')}
-                        </span>
-                      </div>
-                      <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>更新日時:</span>
-                        <span>
-                          {new Date(item.lastModifiedDateTime).toLocaleString('ja-JP')}
-                        </span>
-                      </div>
+                      {item.webViewLink && (
+                        <div className={styles.infoRow}>
+                          <span className={styles.infoLabel}>WebURL:</span>
+                          <a href={item.webViewLink} target="_blank" rel="noopener noreferrer" className={styles.infoValue}>
+                            {truncateToken(item.webViewLink)}【クリックで開く】
+                          </a>
+                        </div>
+                      )}
                       {index !== rootInfo.length - 1 && <div className={styles.itemDivider}></div>}
                     </div>
                   ))}
@@ -256,60 +223,19 @@ export default function AzurePage() {
                 className={styles.fileInput}
               />
               <button
-                onClick={handleGetFilePath}
-                className={`${styles.fileButton} ${isLoading ? styles.loading : ''}`}
+                onClick={handleDownloadFile}
+                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className={styles.buttonLoader}></div>
                 ) : (
-                  'ファイルパス取得'
+                  'ダウンロード'
                 )}
               </button>
             </div>
             {error && <p className={styles.error}>{error}</p>}
-            {filePath && (
-              <div className={styles.filePathContainer}>
-                <div className={styles.fileInfo}>
-                  <p className={styles.filePath}>
-                    ファイル名: {fileName}
-                  </p>
-                  <div className={styles.pathRow}>
-                    <p className={styles.filePath}>
-                      ファイルパス: {filePath}
-                    </p>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(filePath);
-                        alert('ファイルパスをコピーしました');
-                      }}
-                      className={styles.copyButton}
-                    >
-                      コピー
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.downloadSection}>
-                  {isFile ? (
-                    <button
-                      onClick={handleDownloadFile}
-                      className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className={styles.buttonLoader}></div>
-                      ) : (
-                        'ダウンロード'
-                      )}
-                    </button>
-                  ) : (
-                    <p className={styles.folderMessage}>フォルダはダウンロードできません</p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-
           <button
             onClick={() => signOut()}
             className={styles.logoutButton}

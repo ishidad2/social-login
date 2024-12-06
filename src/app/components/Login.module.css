@@ -68,6 +68,12 @@
   height: 20px;
 }
 
+/* Box button specific styles */
+.boxButton:hover {
+  background: #f0f7ff;
+  border-color: #0061D5;
+}
+
 /* Loading Spinner */
 .loadingContainer {
   display: flex;
@@ -102,6 +108,11 @@
 
   .button:hover {
     background: #1f2937;
+  }
+
+  .boxButton:hover {
+    background: #1a365d;
+    border-color: #0061D5;
   }
 
   .loader {
