@@ -11,8 +11,6 @@ export default function AzurePage() {
   const { data: session, status } = useSession();
   const [copySuccess, setCopySuccess] = useState(false);
   const [fileId, setFileId] = useState('');
-  const [filePath, setFilePath] = useState('');
-  const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [rootInfo, setRootInfo] = useState<any>(null);
@@ -20,10 +18,11 @@ export default function AzurePage() {
   const [rootError, setRootError] = useState('');
   const [isFile, setIsFile] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<any>(null);
 
   if (session?.provider === 'google') {
     redirect('/google');
-  }else if (session?.provider === 'box') {
+  } else if (session?.provider === 'box') {
     redirect('/box');
   }
 
@@ -64,8 +63,6 @@ export default function AzurePage() {
         },
       });
 
-      console.log(res.data);
-
       setRootInfo(res.data.value);
     } catch (error) {
       console.error("Error fetching root directory: ", error);
@@ -75,33 +72,33 @@ export default function AzurePage() {
     }
   };
 
-  const handleGetFilePath = async () => {
-    setIsLoading(true);
-    setError('');
-    setFilePath('');
-    setFileName('');
+  const handleGetFileInfo = async () => {
+    if (!fileId || !session?.access_token) return;
 
     try {
+      setIsLoading(true);
+      setError('');
+      setFileInfo(null);
+
       const res = await axios.get(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}`, {
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
         },
       });
 
-      setFilePath(res.data.webUrl);
-      setFileName(res.data.name);
-      // file かどうかの情報も保存
-      setIsFile(!!res.data.file);  // 新しいstate
+      const data = res.data;
+      setFileInfo(data);
+      setIsFile(!!data.file);
     } catch (error) {
-      console.error("Error fetching files: ", error);
-      setError('ファイルパスの取得に失敗しました');
+      console.error("Error fetching file info: ", error);
+      setError('ファイル情報の取得に失敗しました');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDownloadFile = async () => {
-    if (!fileId || !session?.access_token) return;
+    if (!fileId || !session?.access_token || !isFile) return;
 
     try {
       setIsLoading(true);
@@ -115,19 +112,12 @@ export default function AzurePage() {
         }
       );
 
-      // Create blob link to download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', fileName || 'download');
-
-      // Append to html link element page
+      link.setAttribute('download', fileInfo?.name || 'download');
       document.body.appendChild(link);
-
-      // Start download
       link.click();
-
-      // Clean up and remove the link
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -205,7 +195,7 @@ export default function AzurePage() {
                           onClick={() => {
                             navigator.clipboard.writeText(item.id);
                             setCopiedId(item.id);
-                            setTimeout(() => setCopiedId(null), 2000); // 2秒後に非表示
+                            setTimeout(() => setCopiedId(null), 2000);
                           }}
                           className={`${styles.miniCopyButton} ${copiedId === item.id ? styles.copied : ''}`}
                         >
@@ -256,56 +246,35 @@ export default function AzurePage() {
                 className={styles.fileInput}
               />
               <button
-                onClick={handleGetFilePath}
-                className={`${styles.fileButton} ${isLoading ? styles.loading : ''}`}
+                onClick={handleGetFileInfo}
+                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <div className={styles.buttonLoader}></div>
                 ) : (
-                  'ファイルパス取得'
+                  'ファイル情報取得'
+                )}
+              </button>
+              <button
+                onClick={handleDownloadFile}
+                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
+                disabled={isLoading || !isFile}
+              >
+                {isLoading ? (
+                  <div className={styles.buttonLoader}></div>
+                ) : (
+                  'ダウンロード'
                 )}
               </button>
             </div>
             {error && <p className={styles.error}>{error}</p>}
-            {filePath && (
-              <div className={styles.filePathContainer}>
-                <div className={styles.fileInfo}>
-                  <p className={styles.filePath}>
-                    ファイル名: {fileName}
-                  </p>
-                  <div className={styles.pathRow}>
-                    <p className={styles.filePath}>
-                      ファイルパス: {filePath}
-                    </p>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(filePath);
-                        alert('ファイルパスをコピーしました');
-                      }}
-                      className={styles.copyButton}
-                    >
-                      コピー
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.downloadSection}>
-                  {isFile ? (
-                    <button
-                      onClick={handleDownloadFile}
-                      className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <div className={styles.buttonLoader}></div>
-                      ) : (
-                        'ダウンロード'
-                      )}
-                    </button>
-                  ) : (
-                    <p className={styles.folderMessage}>フォルダはダウンロードできません</p>
-                  )}
-                </div>
+            {fileInfo && (
+              <div className={styles.fileInfo}>
+                <h3>ファイル情報</h3>
+                <pre className={styles.jsonDisplay}>
+                  {JSON.stringify(fileInfo, null, 2)}
+                </pre>
               </div>
             )}
           </div>

@@ -18,10 +18,11 @@ export default function BoxPage() {
   const [rootError, setRootError] = useState('');
   const [copyItem, setCopyItem] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<any>(null);
 
   if (session?.provider === 'azure-ad') {
     redirect('/azure');
-  }else if (session?.provider === 'google') {
+  } else if (session?.provider === 'google') {
     redirect('/google');
   }
 
@@ -62,8 +63,6 @@ export default function BoxPage() {
         },
       });
 
-      console.log(res.data);
-
       setRootInfo(res.data.entries);
     } catch (error) {
       console.error("Error fetching root directory: ", error);
@@ -73,6 +72,32 @@ export default function BoxPage() {
     }
   };
 
+  const handleGetFileInfo = async () => {
+    if (!fileId || !session?.access_token) return;
+
+    try {
+      setIsLoading(true);
+      setError('');
+      setFileInfo(null);
+
+      const response = await axios.get(
+        `https://api.box.com/2.0/files/${fileId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+
+      setFileInfo(response.data);
+      setCopyItem(response.data);
+    } catch (error) {
+      console.error("Error fetching file info: ", error);
+      setError('ファイル情報の取得に失敗しました');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDownloadFile = async () => {
     if (!fileId || !session?.access_token) return;
@@ -80,6 +105,10 @@ export default function BoxPage() {
     try {
       setIsLoading(true);
       setError('');
+
+      if (copyItem?.type !== 'file') {
+        throw new Error('ファイル以外はダウンロードできません。');
+      }
 
       const fileInfo = await fetch(
         `https://api.box.com/2.0/files/${fileId}/content`,
@@ -91,17 +120,10 @@ export default function BoxPage() {
         }
       );
 
-      //レスポンス：https://ja.developer.box.com/reference/get-files-id/#response
-      console.log(copyItem);
-
-      if (copyItem.type != 'file') {
-        throw new Error('ファイル以外はダウンロードできません。');
-      }
-
       const url = fileInfo.url;
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', copyItem.name); // ファイル名はIDをデフォルトとして使用
+      link.setAttribute('download', copyItem.name);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
@@ -182,7 +204,7 @@ export default function BoxPage() {
                             navigator.clipboard.writeText(item.id);
                             setCopyItem(item);
                             setCopiedId(item.id);
-                            setTimeout(() => setCopiedId(null), 2000); // 2秒後に非表示
+                            setTimeout(() => setCopiedId(null), 2000);
                           }}
                           className={`${styles.miniCopyButton} ${copiedId === item.id ? styles.copied : ''}`}
                         >
@@ -223,6 +245,17 @@ export default function BoxPage() {
                 className={styles.fileInput}
               />
               <button
+                onClick={handleGetFileInfo}
+                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className={styles.buttonLoader}></div>
+                ) : (
+                  'ファイル情報取得'
+                )}
+              </button>
+              <button
                 onClick={handleDownloadFile}
                 className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
                 disabled={isLoading}
@@ -235,6 +268,14 @@ export default function BoxPage() {
               </button>
             </div>
             {error && <p className={styles.error}>{error}</p>}
+            {fileInfo && (
+              <div className={styles.fileInfo}>
+                <h3>ファイル情報</h3>
+                <pre className={styles.jsonDisplay}>
+                  {JSON.stringify(fileInfo, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
           <button
             onClick={() => signOut()}
