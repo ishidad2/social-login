@@ -75,6 +75,17 @@ export default function Login() {
               </svg>
               Boxでログイン
             </button>
+
+            <button
+              onClick={() => signIn('dropbox', {}, { prompt: 'login' })}
+              className={`${styles.button} ${styles.dropboxButton}`}
+            >
+              <svg className={styles.icon} viewBox="0 0 126 115">
+                <path d="M37.038 0L0 24.183 25.609 44.69l37.343-23.058L37.038 0zM0 65.199L37.038 89.38 62.953 67.75 25.609 44.69 0 65.199zM62.953 67.749L88.869 89.38 125.906 65.2l-25.61-20.509-37.343 23.059zM125.906 24.183L88.87 0 62.953 21.631l37.344 23.059 25.609-20.507z" fill="#007ee5"/>
+                <path d="M63.029 72.403L37.037 93.97l-11.12-7.261v8.14l37.112 22.257 37.113-22.256v-8.14l-11.12 7.261L63.03 72.403z" fill="#007ee5"/>
+              </svg>
+              Dropboxでログイン
+            </button>
           </div>
         </div>
       </div>

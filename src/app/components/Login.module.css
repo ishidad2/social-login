@@ -59,8 +59,6 @@
 
 .button:focus {
   outline: none;
-  ring: 2px solid #4b5563;
-  ring-offset: 2px;
 }
 
 .icon {
@@ -71,7 +69,6 @@
 /* Box button specific styles */
 .boxButton:hover {
   background: #f0f7ff;
-  border-color: #0061D5;
 }
 
 /* Loading Spinner */

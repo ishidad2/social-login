@@ -23,6 +23,8 @@ export default function Home() {
       redirect('/google');
     } else if (session.provider === 'box') {
       redirect('/box');
+    } else if (session.provider === 'dropbox') {
+      redirect('/dropbox');
     }
   }
 
