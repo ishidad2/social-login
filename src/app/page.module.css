@@ -707,3 +707,40 @@ a.secondary {
     background-color: #374151;
   }
 }
+
+.rootHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toggleButton {
+  padding: 0.5rem 1rem;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggleButton:hover {
+  background-color: #e0e0e0;
+}
+
+.jsonView {
+  margin-top: 1rem;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.jsonDisplay {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0;
+  font-family: monospace;
+}

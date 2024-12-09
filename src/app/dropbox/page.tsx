@@ -18,6 +18,8 @@ export default function DropboxPage() {
   const [copyItem, setCopyItem] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<any>(null);
+  const [showJson, setShowJson] = useState(false);
+  const [isFile, setIsFile] = useState(true);
 
   if (session?.provider === 'azure-ad') {
     redirect('/azure');
@@ -67,11 +69,13 @@ export default function DropboxPage() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            "path": "",
-            "recursive": false,
-            "include_media_info": false,
             "include_deleted": false,
-            "include_has_explicit_shared_members": false
+            "include_has_explicit_shared_members": false,
+            "include_media_info": false,
+            "include_mounted_folders": true,
+            "include_non_downloadable_files": true,
+            "path": "",
+            "recursive": false
           })
         }
       );
@@ -81,7 +85,7 @@ export default function DropboxPage() {
       }
 
       const data = await response.json();
-      setRootInfo(data.entries);
+      setRootInfo(data);
     } catch (error) {
       console.error("Error fetching root directory: ", error);
       setRootError('ファイル一覧の取得に失敗しました');
@@ -90,7 +94,7 @@ export default function DropboxPage() {
     }
   };
 
-  const handleShowFile = async () => {
+  const handleShowFileOrFolder = async () => {
     if (!fileId || !session?.access_token) return;
 
     try {
@@ -98,33 +102,58 @@ export default function DropboxPage() {
       setError('');
       setFileInfo(null);
 
-      const response = await fetch(
-        "https://api.dropboxapi.com/2/files/get_metadata",
-        {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + session?.access_token,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            "path": fileId,
-            "include_media_info": true,
-            "include_deleted": false,
-            "include_has_explicit_shared_members": false
-          })
-        }
-      );
+      let response;
+      if (isFile) {
+        // ファイル情報取得
+        response = await fetch(
+          "https://api.dropboxapi.com/2/files/get_metadata",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + session?.access_token,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              "path": fileId,
+              "include_media_info": true,
+              "include_deleted": false,
+              "include_has_explicit_shared_members": false
+            })
+          }
+        );
+      } else {
+        // フォルダ情報取得
+        response = await fetch(
+          "https://api.dropboxapi.com/2/files/list_folder",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + session?.access_token,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              "path": fileId,
+              "include_deleted": false,
+              "include_has_explicit_shared_members": false,
+              "include_media_info": false,
+              "include_mounted_folders": true,
+              "include_non_downloadable_files": true,
+              "recursive": false
+            })
+          }
+        );
+      }
 
       if (!response.ok) {
-        throw new Error('ファイル情報の取得に失敗しました');
+        throw new Error(isFile ? 'ファイル情報の取得に失敗しました' : 'フォルダ情報の取得に失敗しました');
       }
 
       const data = await response.json();
       setFileInfo(data);
       setCopyItem(data);
     } catch (error) {
-      console.error("Error fetching file info: ", error);
-      setError('ファイル情報の取得に失敗しました');
+      console.error("Error fetching info: ", error);
+      setError(isFile ? 'ファイル情報の取得に失敗しました' : 'フォルダ情報の取得に失敗しました');
     } finally {
       setIsLoading(false);
     }
@@ -214,37 +243,53 @@ export default function DropboxPage() {
 
           <div className={styles.fileSection}>
             <div className={styles.rootSection}>
-              <button
-                onClick={handleGetRootDirectory}
-                className={`${styles.rootButton} ${isLoadingRoot ? styles.loading : ''}`}
-                disabled={isLoadingRoot}
-              >
-                {isLoadingRoot ? (
-                  <div className={styles.buttonLoader}></div>
-                ) : (
-                  'ファイル一覧取得'
-                )}
-              </button>
-              {rootError && <p className={styles.error}>{rootError}</p>}
+              <div className={styles.rootHeader}>
+                <button
+                  onClick={handleGetRootDirectory}
+                  className={`${styles.rootButton} ${isLoadingRoot ? styles.loading : ''}`}
+                  disabled={isLoadingRoot}
+                >
+                  {isLoadingRoot ? (
+                    <div className={styles.buttonLoader}></div>
+                  ) : (
+                    'ファイル一覧取得'
+                  )}
+                </button>
+              </div>
               {rootInfo && (
+                <div>
+                  <button
+                    onClick={() => setShowJson(!showJson)}
+                    className={styles.toggleButton}
+                  >
+                    {showJson ? '通常表示' : 'JSON表示'}
+                  </button>
+                </div>
+              )}
+              {rootError && <p className={styles.error}>{rootError}</p>}
+              {rootInfo && !showJson && (
                 <div className={styles.rootInfo}>
                   <h3>ファイル一覧</h3>
-                  {rootInfo.map((item: any, index: number) => (
+                  {rootInfo.entries.map((item: any, index: number) => (
                     <div key={item.id} className={styles.infoGrid}>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>ID:</span>
+                        <span>{item.id}</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.id);
+                            setCopyItem(item);
+                            setCopiedId(item.id);
+                            setTimeout(() => setCopiedId(null), 2000);
+                          }}
+                          className={`${styles.miniCopyButton} ${copiedId === item.id ? styles.copied : ''}`}
+                        >
+                          {copiedId === item.id ? '✓ コピー済' : 'コピー'}
+                        </button>
+                      </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>パス:</span>
                         <span>{item.path_display}</span>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(item.path_display);
-                            setCopyItem(item);
-                            setCopiedId(item.path_display);
-                            setTimeout(() => setCopiedId(null), 2000);
-                          }}
-                          className={`${styles.miniCopyButton} ${copiedId === item.path_display ? styles.copied : ''}`}
-                        >
-                          {copiedId === item.path_display ? '✓ コピー済' : 'コピー'}
-                        </button>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>名前:</span>
@@ -254,50 +299,84 @@ export default function DropboxPage() {
                         <span className={styles.infoLabel}>種別:</span>
                         <span>{item[".tag"]}</span>
                       </div>
-                      {index !== rootInfo.length - 1 && <div className={styles.itemDivider}></div>}
+                      {index !== rootInfo.entries.length - 1 && <div className={styles.itemDivider}></div>}
                     </div>
                   ))}
+                </div>
+              )}
+              {rootInfo && showJson && (
+                <div className={styles.jsonView}>
+                  <h3>JSON形式</h3>
+                  <pre className={styles.jsonDisplay}>
+                    {JSON.stringify(rootInfo, null, 2)}
+                  </pre>
                 </div>
               )}
             </div>
 
             <div className={styles.divider}></div>
 
-            <div className={styles.inputGroup}>
-              <input
-                type="text"
-                value={fileId}
-                onChange={(e) => setFileId(e.target.value)}
-                placeholder="ファイルパスを入力"
-                className={styles.fileInput}
-              />
-              <button
-                onClick={handleShowFile}
-                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className={styles.buttonLoader}></div>
-                ) : (
-                  'ファイル情報取得'
+            <div className={styles.inputSection}>
+              <div className={styles.typeSelector}>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    checked={isFile}
+                    onChange={() => setIsFile(true)}
+                    name="type"
+                    className={styles.radioInput}
+                  />
+                  ファイル
+                </label>
+                <label className={styles.radioLabel}>
+                  <input
+                    type="radio"
+                    checked={!isFile}
+                    onChange={() => setIsFile(false)}
+                    name="type"
+                    className={styles.radioInput}
+                  />
+                  フォルダ
+                </label>
+              </div>
+              <div className={styles.inputGroup}>
+                <input
+                  type="text"
+                  value={fileId}
+                  onChange={(e) => setFileId(e.target.value)}
+                  placeholder={isFile ? "ファイルパスを入力" : "フォルダパスを入力"}
+                  className={styles.fileInput}
+                />
+                <button
+                  onClick={handleShowFileOrFolder}
+                  className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className={styles.buttonLoader}></div>
+                  ) : (
+                    isFile ? 'ファイル情報取得' : 'フォルダ情報取得'
+                  )}
+                </button>
+                {isFile && (
+                  <button
+                    onClick={handleDownloadFile}
+                    className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className={styles.buttonLoader}></div>
+                    ) : (
+                      'ダウンロード'
+                    )}
+                  </button>
                 )}
-              </button>
-              <button
-                onClick={handleDownloadFile}
-                className={`${styles.downloadButton} ${isLoading ? styles.loading : ''}`}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className={styles.buttonLoader}></div>
-                ) : (
-                  'ダウンロード'
-                )}
-              </button>
+              </div>
             </div>
             {error && <p className={styles.error}>{error}</p>}
             {fileInfo && (
               <div className={styles.fileInfo}>
-                <h3>ファイル情報</h3>
+                <h3>{isFile ? 'ファイル情報' : 'フォルダ情報'}</h3>
                 <pre className={styles.jsonDisplay}>
                   {JSON.stringify(fileInfo, null, 2)}
                 </pre>
