@@ -23,6 +23,8 @@ export default function GooglePage() {
     redirect('/azure');
   }else if (session?.provider === 'box') {
     redirect('/box');
+  } else if (session?.provider === 'dropbox') {
+    redirect('/dropbox');
   }
 
   if (status === 'loading') {

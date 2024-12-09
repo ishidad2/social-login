@@ -24,6 +24,8 @@ export default function BoxPage() {
     redirect('/azure');
   } else if (session?.provider === 'google') {
     redirect('/google');
+  } else if (session?.provider === 'dropbox') {
+    redirect('/dropbox');
   }
 
   if (status === 'loading') {

@@ -24,6 +24,8 @@ export default function AzurePage() {
     redirect('/google');
   } else if (session?.provider === 'box') {
     redirect('/box');
+  } else if (session?.provider === 'dropbox') {
+    redirect('/dropbox');
   }
 
   if (status === 'loading') {
